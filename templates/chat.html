@@ -65,7 +65,7 @@
 
         document.getElementById("leave-room").addEventListener("click", () => {
           socket.emit("leave", { room: room });
-          window.location.href = "{{ url_for('dashboard') }}";
+          window.location.href = "{{ url_for('app.dashboard') }}";
         });
       });
     </script>
