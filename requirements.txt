@@ -3,3 +3,5 @@ Flask-SQLAlchemy
 Flask-SocketIO
 eventlet
 bcrypt
+python-dotenv
+requests

@@ -1,6 +1,7 @@
-from flask import Blueprint, render_template, redirect, url_for, session, request
+from flask import Blueprint, render_template, redirect, url_for, session, request, flash
 from connection.connection import db
 from models.room import Room
+from models.user import User
 from flask_socketio import join_room, leave_room, send
 from routes.auth_routes import login_required
 import uuid
@@ -71,7 +72,7 @@ def dashboard():
     rooms = Room.query.filter_by(is_public=True).all()
     for room in rooms:
         room.user_count = len(socketio.server.manager.rooms.get('/', {}).get(room.room_code, []))
-    return render_template('dashboard.html', username=session.get('username'), online_users=online_users_count, rooms=rooms)
+    return render_template('dashboard.html', username=session.get('username'), online_users=online_users_count, rooms=rooms, ai_enabled=True)
 
 @app_bp.route('/create_room', methods=['POST'])
 @login_required
@@ -89,8 +90,28 @@ def join_room_route():
     room_code = request.form['room_code']
     return redirect(url_for('app.chat', room_code=room_code))
 
+@app_bp.route('/invite_user', methods=['POST'])
+@login_required
+def invite_user():
+    invite_username = request.form['invite_username']
+    user = User.query.filter_by(username=invite_username).first()
+    if user:
+        room_code = str(uuid.uuid4())[:8]
+        new_room = Room(room_code=room_code, is_public=False)
+        db.session.add(new_room)
+        db.session.commit()
+        return redirect(url_for('app.chat', room_code=room_code))
+    flash('User not found', 'danger')
+    return redirect(url_for('app.dashboard'))
+
+@app_bp.errorhandler(404)
+def page_not_found(e):
+    return redirect(url_for('app.dashboard'))
+
 @app_bp.route('/chat/<room_code>')
 @login_required
 def chat(room_code):
-    room = Room.query.filter_by(room_code=room_code).first_or_404()
+    room = Room.query.filter_by(room_code=room_code).first()
+    if not room:
+        return redirect(url_for('app.dashboard'))
     return render_template('chat.html', username=session.get('username'), room_code=room_code, online_users=len(online_users))
