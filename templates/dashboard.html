@@ -6,41 +6,107 @@
     <title>Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 </head>
-<body class="bg-gray-100 flex h-screen">
-    <div class="bg-blue-500 text-white w-64 p-6 flex flex-col">
-        <h2 class="text-2xl font-bold mb-6">Dashboard</h2>
-        <p class="mb-4">Welcome, {{ username }}!</p>
-        <a href="{{ url_for('auth.logout') }}" class="bg-red-500 text-white py-2 rounded-lg text-center hover:bg-red-600 transition duration-300 mb-4">Logout</a>
-        <p id="online-users" class="mt-auto">Online Users: {{ online_users }}</p>
-    </div>
-    <div class="flex-1 p-8">
-        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl mx-auto">
-            <h2 class="text-2xl font-bold mb-6 text-center">Create or Join a Room</h2>
-            <div class="space-y-4">
-                <form id="create-room-form" method="POST" action="{{ url_for('app.create_room') }}">
-                    <div class="flex items-center mb-4">
-                        <input type="checkbox" id="is_public" name="is_public" class="mr-2">
-                        <label for="is_public" class="text-gray-700">Public Room</label>
-                    </div>
-                    <button type="submit" class="w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition duration-300">Create Room</button>
-                </form>
-                <form id="join-room-form" method="POST" action="{{ url_for('app.join_room_route') }}" class="flex space-x-2">
-                    <input id="room" name="room_code" autocomplete="off" placeholder="Enter room code" required class="flex-1 px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300">Join Room</button>
-                </form>
+<body class="bg-gray-100 flex flex-col h-screen">
+
+    <!-- App Bar -->
+    <header class="bg-blue-600 text-white p-6 shadow-xl flex justify-between items-center">
+        <h1 class="text-2xl font-semibold">Realtime Chat</h1>
+        <!-- <nav class="space-x-6">
+            <a href="#" class="hover:underline text-lg">Home</a>
+            <a href="#" class="hover:underline text-lg">About</a>
+            <a href="#" class="hover:underline text-lg">Contact</a>
+        </nav> -->
+        <div class="flex items-center space-x-4">
+            <span class="text-lg">Welcome, {{ username }}!</span>
+            <a href="{{ url_for('auth.logout') }}" class="bg-red-600 text-white py-2 px-4 rounded-xl hover:bg-red-700 transition duration-300 text-lg">Logout</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="flex flex-1 overflow-hidden">
+        <!-- Content Area -->
+        <div class="flex-1 p-8 md:p-12 flex flex-col space-y-10 overflow-y-auto">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+                <!-- Create/Join Room Section -->
+                <div class="bg-white p-8 rounded-2xl shadow-2xl w-full">
+                    <h2 class="text-3xl font-semibold mb-6 text-center">Create or Join a Room</h2>
+                    <form id="create-room-form" method="POST" action="{{ url_for('app.create_room') }}" class="space-y-6">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center">
+                                <input type="checkbox" id="is_public" name="is_public" class="mr-3 rounded-full border-gray-300">
+                                <label for="is_public" class="text-gray-700 text-lg">Public Room</label>
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-2xl hover:bg-blue-700 transition duration-300">Create Room</button>
+                    </form>
+                    <form id="join-room-form" method="POST" action="{{ url_for('app.join_room_route') }}" class="flex space-x-4 mt-8">
+                        <input id="room" name="room_code" autocomplete="off" placeholder="Enter room code" required class="flex-1 px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg">
+                        <button type="submit" class="bg-blue-600 text-white py-3 px-6 rounded-xl hover:bg-blue-700 transition duration-300 text-lg">Join Room</button>
+                    </form>
+                </div>
+
+                <!-- Public Rooms Section -->
+                <div class="bg-white p-8 rounded-2xl shadow-2xl w-full">
+                    <h2 class="text-3xl font-semibold mb-6 text-center">Public Rooms</h2>
+                    <ul class="space-y-6">
+                        {% for room in rooms %}
+                            <li class="flex justify-between items-center bg-gray-100 p-6 rounded-2xl shadow-md">
+                                <span class="text-lg">{{ room.room_code }} ({{ room.user_count }} users)</span>
+                                <a href="{{ url_for('app.chat', room_code=room.room_code) }}" class="bg-blue-600 text-white py-3 px-6 rounded-xl hover:bg-blue-700 transition duration-300 text-lg">Join</a>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Online Users Section -->
+                <!-- <div class="bg-white p-8 rounded-2xl shadow-2xl w-full">
+                    <h2 class="text-3xl font-semibold mb-6 text-center">Online Users</h2>
+                    <p class="text-lg text-center">{{ online_users }}</p>
+                </div> -->
+
+                <!-- AI Section (Optional) -->
+                {% if ai_enabled %}
+                <div class="bg-white p-8 rounded-2xl shadow-2xl w-full">
+                    <h2 class="text-3xl font-semibold mb-6 text-center">Ask AI</h2>
+                    <form id="ai-form" class="flex space-x-4">
+                        <input type="text" id="ai-question" placeholder="Ask a question..." required class="flex-1 px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-lg">
+                        <button type="submit" class="bg-blue-600 text-white py-3 px-6 rounded-xl hover:bg-blue-700 transition duration-300 text-lg">Ask</button>
+                    </form>
+                    <div id="ai-answer" class="mt-6 text-lg"></div>
+                    <div id="loading" class="mt-6 hidden text-lg">Loading...</div>
+                </div>
+                {% endif %}
+
             </div>
         </div>
-        <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl mx-auto mt-8">
-            <h2 class="text-2xl font-bold mb-6 text-center">Public Rooms</h2>
-            <ul class="space-y-4">
-                {% for room in rooms %}
-                    <li class="flex justify-between items-center bg-gray-200 p-4 rounded-lg">
-                        <span>{{ room.room_code }} ({{ room.user_count }} users)</span>
-                        <a href="{{ url_for('chat', room_code=room.room_code) }}" class="bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600 transition duration-300">Join</a>
-                    </li>
-                {% endfor %}
-            </ul>
-        </div>
     </div>
+
+    <script>
+    document.getElementById('ai-form').addEventListener('submit', function(event) {
+        event.preventDefault();
+        const questionInput = document.getElementById('ai-question');
+        const askButton = event.target.querySelector('button[type="submit"]');
+        questionInput.disabled = true;
+        askButton.disabled = true;
+        const question = questionInput.value;
+        document.getElementById('loading').classList.remove('hidden');
+        fetch('/ai/ask', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ question: question })
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('ai-answer').innerText = data.answer || 'Error: ' + data.error;
+            questionInput.disabled = false;
+            askButton.disabled = false;
+        });
+    });
+    </script>
+
 </body>
 </html>
